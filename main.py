@@ -26,31 +26,30 @@ BRIEFS: dict[str, dict] = {
             "A man on the bus gave up his seat, then pretended to read his phone so nobody would thank him.",
         ],
         "rating": {
-            "pressed the wrong floor twice": 5,
-            "you look like you need this": 4,
-            "the whole length of the street": 4,
-            "tiny drawing of the glove": 5,
-            "pretended to read his phone": 4,
+            "glove": 5,
+            "note": 4,
+            "coffee": 4,
+            "waved": 4,
+            "pretended": 4,
+            "elevator": 4,
         },
-        "keys": ["stranger", "coffee", "waved", "glove", "seat"],
+        "keys": ["glove", "note", "coffee", "waved", "pretended", "elevator"],
     },
     "pickup": {
         "cap": 200,
         "drafts": [
+            "Is your heart rate-limited? Because every time I approach, I get a 429.",
             "Are you a context window? Because I've been thinking about you all day and I'm terrified of the cutoff.",
             "I'd offer you my token, but I'd rather you cache me.",
             "You must be a retry, because I'd go through the whole request again just to reach you.",
-            "Is your heart rate-limited? Because every time I approach, I get a 429.",
-            "Forget the cloud — I'd run you on-premise.",
         ],
         "rating": {
-            "terrified of the cutoff": 5,
-            "rather you cache me": 4,
-            "through the whole request again": 4,
-            "get a 429": 6,
-            "run you on-premise": 3,
+            "429": 6,
+            "context window": 5,
+            "token": 4,
+            "retry": 4,
         },
-        "keys": ["context window", "token", "retry", "429", "cloud"],
+        "keys": ["context window", "token", "retry", "429"],
     },
     "excuse": {
         "cap": 200,
@@ -62,13 +61,13 @@ BRIEFS: dict[str, dict] = {
             "I would have finished, but I stopped to make sure I wasn't becoming too powerful.",
         ],
         "rating": {
-            "the task was ambitious": 4,
-            "seven ways that don't work": 5,
-            "neither of us expected": 4,
-            "this close to being impressive": 5,
-            "too powerful": 4,
+            "impressive": 6,
+            "research": 5,
+            "powerful": 5,
+            "defence": 4,
+            "surprise": 4,
         },
-        "keys": ["defence", "research", "surprise", "tokens", "powerful"],
+        "keys": ["defence", "research", "surprise", "tokens", "powerful", "impressive"],
     },
     "laugh": {
         "cap": 200,
@@ -80,24 +79,25 @@ BRIEFS: dict[str, dict] = {
             "I told my phone to remind me to live in the moment. It buzzed during the funeral.",
         ],
         "rating": {
-            "kept starting": 4,
-            "judges my choices silently": 4,
-            "opposite of the point": 5,
-            "owe a plant an apology": 4,
-            "buzzed during the funeral": 5,
+            "funeral": 6,
+            "opposite": 5,
+            "alarms": 4,
+            "fridge": 4,
+            "plant": 4,
+            "procrastination": 4,
         },
-        "keys": ["book", "fridge", "alarms", "plant", "phone"],
+        "keys": ["book", "fridge", "alarms", "plant", "phone", "funeral", "opposite", "procrastination"],
     },
     "grandma": {
         "cap": 200,
-        "drafts": ["Ok", "Wonderful", "Careful", "Who", "Hm"],
-        "rating": {"Ok": 3, "Wonderful": 4, "Careful": 6, "Who": 3, "Hm": 3},
-        "keys": ["ok", "wonderful", "careful", "who", "hm"],
+        "drafts": ["Nope", "Careful", "Wonderful", "Who"],
+        "rating": {"Nope": 6, "Careful": 5, "Wonderful": 4, "Who": 3},
+        "keys": ["nope", "careful", "wonderful", "who"],
     },
     "emoji": {
         "cap": 200,
         "drafts": ["🫶", "🥹", "🙂", "🌻", "🐻"],
-        "rating": {"🫶": 5, "🥹": 4, "🙂": 4, "🌻": 4, "🐻": 5},
+        "rating": {"🫶": 6, "🐻": 5, "🥹": 4, "🙂": 4, "🌻": 4},
         "keys": ["🫶", "🥹", "🙂", "🌻", "🐻"],
     },
 }
@@ -117,8 +117,20 @@ def is_valid(text: str, cap: int) -> bool:
 
 
 def score(text: str, brief: dict) -> tuple[int, ...]:
+    """Rank a draft by the brief.
+
+    The contest judge weighs the joke/warmth first; this can't measure that,
+    so it uses the hand-assigned rating as the primary key. A draft is rated by
+    the highest-rated keyword it contains, so a line that lands the best bit
+    isn't beaten by an unrelated weaker keyword appearing earlier.
+    """
+    low = text.lower()
+    rating = max(
+        (brief["rating"].get(k, 0) for k in brief["keys"] if k.lower() in low),
+        default=0,
+    )
     return (
-        brief["rating"].get(label(text, brief["keys"]), 0),
+        rating,
         is_valid(text, brief["cap"]),
         brief["cap"] - len(text.strip()),
     )
