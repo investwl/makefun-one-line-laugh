@@ -125,8 +125,10 @@ def score(text: str, brief: dict) -> tuple[int, ...]:
     isn't beaten by an unrelated weaker keyword appearing earlier.
     """
     low = text.lower()
+    # rating keys may be capitalised; match case-insensitively
+    rlow = {k.lower(): v for k, v in brief["rating"].items()}
     rating = max(
-        (brief["rating"].get(k, 0) for k in brief["keys"] if k.lower() in low),
+        (rlow.get(k.lower(), 0) for k in brief["keys"] if k.lower() in low),
         default=0,
     )
     return (
